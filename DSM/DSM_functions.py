@@ -1,8 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
 
 node(self, u, v, w, theta_x, theta_y, theta_z):
     self.u = u
@@ -19,8 +14,9 @@ element(self, node_1, node_2):
     self.node_1 = node_1
     self.node_2 = node_2
     
-    def element_coords(self):
+    def displacement_rot_vector(self):
         return [self.node_1.node_coords(), self.node_2.node_coords()]
+        
     
 def stiffness_matrix ():
 
