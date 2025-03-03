@@ -3,12 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ME700-Assignment-1-Part-1"
-version = "0.0.0"
+name = "ME700-Assignment-2-Part-1"
+version = "0.1.0"
 authors = [
   { name="Alexander Kochling", email="akoch23@bu.edu" },
 ]
-description = "newtons method solver workflow"
+description = "Direct Stiffness Method Solver"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -21,6 +21,9 @@ dependencies = [
     "pytest==7.1.2",
     "pytest-cov==3.0.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["DSM"]
 
 [project.urls]
 "Homepage" = "https://github.com/akoch23/ME700-Assignment-1-Part-1/tree/main"
