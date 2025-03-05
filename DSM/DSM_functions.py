@@ -1,55 +1,54 @@
 import numpy as np
+# Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
 
-def local_elastic_stiffness_matrix(E: float, nu: float, A: float, L: float, Iy: float, Iz: float, J: float) -> np.ndarray:
-    k_e = np.zeros((12, 12))
-    # Axial terms - extension of local x axis
-    axial_stiffness = E * A / L
-    k_e[0, 0] = axial_stiffness
-    k_e[0, 6] = -axial_stiffness
-    k_e[6, 0] = -axial_stiffness
-    k_e[6, 6] = axial_stiffness
-    # Torsion terms - rotation about local x axis
-    torsional_stiffness = E * J / (2.0 * (1 + nu) * L)
-    k_e[3, 3] = torsional_stiffness
-    k_e[3, 9] = -torsional_stiffness
-    k_e[9, 3] = -torsional_stiffness
-    k_e[9, 9] = torsional_stiffness
-    # Bending terms - bending about local z axis
-    k_e[1, 1] = E * 12.0 * Iz / L ** 3.0
-    k_e[1, 7] = E * -12.0 * Iz / L ** 3.0
-    k_e[7, 1] = E * -12.0 * Iz / L ** 3.0
-    k_e[7, 7] = E * 12.0 * Iz / L ** 3.0
-    k_e[1, 5] = E * 6.0 * Iz / L ** 2.0
-    k_e[5, 1] = E * 6.0 * Iz / L ** 2.0
-    k_e[1, 11] = E * 6.0 * Iz / L ** 2.0
-    k_e[11, 1] = E * 6.0 * Iz / L ** 2.0
-    k_e[5, 7] = E * -6.0 * Iz / L ** 2.0
-    k_e[7, 5] = E * -6.0 * Iz / L ** 2.0
-    k_e[7, 11] = E * -6.0 * Iz / L ** 2.0
-    k_e[11, 7] = E * -6.0 * Iz / L ** 2.0
-    k_e[5, 5] = E * 4.0 * Iz / L
-    k_e[11, 11] = E * 4.0 * Iz / L
-    k_e[5, 11] = E * 2.0 * Iz / L
-    k_e[11, 5] = E * 2.0 * Iz / L
-    # Bending terms - bending about local y axis
-    k_e[2, 2] = E * 12.0 * Iy / L ** 3.0
-    k_e[2, 8] = E * -12.0 * Iy / L ** 3.0
-    k_e[8, 2] = E * -12.0 * Iy / L ** 3.0
-    k_e[8, 8] = E * 12.0 * Iy / L ** 3.0
-    k_e[2, 4] = E * -6.0 * Iy / L ** 2.0
-    k_e[4, 2] = E * -6.0 * Iy / L ** 2.0
-    k_e[2, 10] = E * -6.0 * Iy / L ** 2.0
-    k_e[10, 2] = E * -6.0 * Iy / L ** 2.0
-    k_e[4, 8] = E * 6.0 * Iy / L ** 2.0
-    k_e[8, 4] = E * 6.0 * Iy / L ** 2.0
-    k_e[8, 10] = E * 6.0 * Iy / L ** 2.0
-    k_e[10, 8] = E * 6.0 * Iy / L ** 2.0
-    k_e[4, 4] = E * 4.0 * Iy / L
-    k_e[10, 10] = E * 4.0 * Iy / L
-    k_e[4, 10] = E * 2.0 * Iy / L
-    k_e[10, 4] = E * 2.0 * Iy / L
-    return k_e
+def local_element_stiffness_matrix(E: float, nu: float, A: float, L: float, Iy: float, Iz: float, J: float) -> np.ndarray:
+    k = np.zeros((12, 12))
+    
+    k[0, 0] = A/L
+    k[0, 6] = -A/L
+    k[6, 0] = -A/L
+    k[6, 6] = A/L
+
+    k[3, 3] = (12 * I_y)/L**3
+    k_e[3, 8] = -(12 * I_y)/L**3  
+    k_e[8, 3] = -(12 * I_y)/L**3 
+    k_e[8, 8] = (12 * I_y)/L**3 
+
+    k[1, 1] = (12 * I_z)/L**3
+    k[1, 7] = -(12 * I_z)/L**3
+    k[7, 1] = -(12 * I_z)/L**3
+    k[7, 7] = (12 * I_z)/(L**3)
+    k[1, 5] = (6 * I_z)/ L**2
+    k[5, 1] = (6 * I_z)/ L**2
+    k[1, 11] = (6 * I_z)/L**2
+    k[11, 1] = (6 * I_z)/L**2
+    k[5, 7] = -(6 * I_z)/L**2
+    k[7, 5] = -(6 * I_z)/L**2
+    k[7, 11] = -(6 * I_z)/L**2
+    k[11, 7] = -(6 * I_z)/L**2
+    k[5, 5] = (4 * I_z)/L
+    k[11, 11] = (4 * I_z)/L
+    k_e[5, 11] = (2 * I_z)/L
+    k_e[11, 5] = (2 * I_z)/L
+
+    k[2, 2] = (12 * I_y)/L**3
+    k[2, 8] = -(12 * I_y)/L**3
+    k[8, 2] = -(12 * I_y)/L**3
+    k[8, 8] = (12 * I_y)/L**3
+    k[2, 4] = -(6 * I_y)/L**2
+    k[4, 2] = -(6 * I_y)/L**2
+    k[2, 10] = -(6 * I_y)/L**2
+    k[10, 2] = -(6 * I_y)/L**2
+    k[4, 8] = (6 * I_y)/L**2
+    k[8, 4] = (6 * I_y)/L**2
+    k[8, 10] = (6 * I_y)/L**2
+    k[10, 8] = (6 * I_y)/L**2
+    k[4, 4] = (4 * I_y)/L
+    k[10, 10] = (4 * I_y)/L
+    k[4, 10] = (2 * I_y)/L
+    k[10, 4] = (2 * I_y)/L
+    return k
 
 
 def rotation_matrix(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, z: np.ndarray = None):
