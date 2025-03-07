@@ -38,7 +38,7 @@ class Element:
 def node_coordinates():
     node_num = int(input("Enter the number of nodes present in the system: "))
     
-    node_pos = []
+    node_coords = []
     
     for i in range(node_num):        
         print(f"Enter coordinates for Node {i}:")
@@ -48,9 +48,9 @@ def node_coordinates():
         z = float(input(f"  z-coordinate for Node {i}: "))
         
         new_node = Node(x, y, z)
-        node_pos.append(new_node)
+        node_coords.append(new_node)
         
-    return node_pos
+    return node_coords
 
 node_pos = node_coordinates()
 
