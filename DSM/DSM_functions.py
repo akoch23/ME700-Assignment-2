@@ -1,5 +1,6 @@
 import math
 import numpy as np
+%run DSM_math_util.ipynb
 
 # Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
@@ -57,7 +58,7 @@ class Element:
         self.J = J
         
     def __repr__(self):
-        return f"Element({self.node1}, {self.node2})"
+        return f"Element({self.node_1}, {self.node_2})"
     
     def nodes(self):
         return [self.node_1, self.node_2]
@@ -71,9 +72,9 @@ class Element:
 
     def stiffness_matrix(self):
         L = self.length()
-        K_local = local_elastic_stiffness_matrix_3D_beam(self.E, self.A, self.I_y, self.I_z, self.J, L)
+        K_local = local_elastic_stiffness_matrix_3D_beam(self.E, self.nu, self.A, L, self.I_y, self.I_z, self.J)
 
-        rotation = rotation_matrix_3D(self.node_1.coordinates(), self.node_2.coordinates())
+        rotation = rotation_matrix_3D(*self.node_1.coordinates(), *self.node_2.coordinates())
         transformation = transformation_matrix_3D(rotation)
 
         K_global = transformation.T @ K_local @ transformation
@@ -97,9 +98,9 @@ def assemble_global_stiffness_matrix(nodes, elements):
 
         for i in range(12):
             for j in range(12):
-                K_global[dof_indices[i]][dof_indices[j]] += K_e[i,j]
+                K_global[dof_indices[i], dof_indices[j]] += K_e[i,j]
     return K_global
-'''
+
 def apply_boundary_conditions(K, F, nodes):
     constrained_DOFs = []
     for i, node in enumerate(nodes):
@@ -107,7 +108,7 @@ def apply_boundary_conditions(K, F, nodes):
             if node.constraints[dof]:
                 constrained_DOFs.append(i * 6 + dof)
                 
-    constrainted_DOFs.sort()
+    constrained_DOFs.sort()
     K_mod = np.delete(K, constrained_DOFs, axis = 0)
     K_mod = np.delete(K_mod, constrained_DOFs, axis=1)
     F_mod = np.delete(F, constrained_DOFs, axis=0)
@@ -119,7 +120,7 @@ def solve_displacements(K_mod, F_mod):
 
 def compute_reaction_forces(K, U_full, constrained_DOFs):
     return K @ U_full
-'''
+
 
 def node_coordinates():
     node_num = int(input("Enter the number of nodes present in the system: "))
@@ -133,7 +134,7 @@ def node_coordinates():
         z = float(input(f"  z-coordinate for Node {i}: "))
 
         print("Select node constraint type: \n 1 - Fixed Node \n 2 - Pinned Node \n 3 - Free Node")
-        node_type = int(input(f" Enter the number corresponding to contraint type for Node {i}: "))
+        node_type = int(input(f" Enter the number corresponding to constraint type for Node {i}: "))
 
         if node_type == 1:
             constraints = [True, True, True, True, True, True]
@@ -200,7 +201,8 @@ def define_elements(nodes):
     return element_connect
 
 elements = define_elements(node_pos)
-# K_global = assemble_global_stiffness(node_pos, elements)
+
+K_global = assemble_global_stiffness_matrix(node_pos, elements)
 
 print("Defined Elements and Connected Nodes:")
 for i, element in enumerate(elements, start=1):
@@ -208,7 +210,35 @@ for i, element in enumerate(elements, start=1):
     length = element.length()
     print(f"Element {i}: connects Node({node_1.coordinates()}) and Node({node_2.coordinates()}) with length {length: .1f}")
 
-# print("Global Stiffness Matrix: ", K_global)
+print("Global Stiffness Matrix: ", K_global)
 
 
+F_global = np.zeros(len(node_pos) * 6)
 
+for node_idx, load in applied_loads.items():
+    dof_index = node_idx * 6
+    F_global[dof_index:dof_index+6] = load  # Assign applied forces and moments
+
+K_mod, F_mod, constrained_DOFs = apply_boundary_conditions(K_global, F_global, node_pos)
+
+# Solve for displacements
+U_mod = solve_displacements(K_mod, F_mod)
+
+# Reconstruct full displacement vector (including constrained DOFs)
+U_full = np.zeros(len(node_pos) * 6)
+free_dof_indices = [i for i in range(len(node_pos) * 6) if i not in constrained_DOFs]
+
+for i, dof in enumerate(free_dof_indices):
+    U_full[dof] = U_mod[i]
+
+# Compute reaction forces
+reaction_forces = compute_reaction_forces(K_global, U_full, constrained_DOFs)
+
+# Display results
+print("\nNodal Displacements:")
+for i in range(len(node_pos)):
+    print(f"Node {i}: Displacements = {U_full[i*6:i*6+3]}, Rotations = {U_full[i*6+3:i*6+6]}")
+
+print("\nReaction Forces at Constrained DOFs:")
+for dof in constrained_DOFs:
+    print(f"DOF {dof}: {reaction_forces[dof]}")
