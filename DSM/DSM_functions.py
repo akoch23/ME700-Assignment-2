@@ -3,13 +3,39 @@ import numpy as np
 
 # Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
+b = float(input("Enter the base value for each element: "))
+h = float(input("Enter the height value for each element: "))
+A = b*h
+E = float(input("Enter Young's Modulus (E) for each element: ")) 
+nu = float(input("Enter Poisson's ratio (v) for each element: "))
+I_y = h*(b**3/12)
+I_z = b*(h**3/12)
+I_rho = b*(h/12)*(b**2 + h**2)
+J = float(input("Enter torsional constant (J) for each element: "))
+
+def define_forces_and_moments():
+    F_x = float(input("Normal force acting in x-direction: ")) 
+    F_y = float(input("Normal force acting in y-direction: ")) 
+    F_z = float(input("Normal force acting in z-direction: ")) 
+
+    F = [F_x, F_y, F_z]
+
+    M_x = float(input("Moment force acting in x-direction: ")) 
+    M_y = float(input("Moment force acting in y-direction: ")) 
+    M_z = float(input("Moment force acting in z-direction: ")) 
+
+    M = [M_x, M_y, M_z]
+
+    return F, M
+
+
 class Node:
     def __init__(self, x, y, z, constraints=None, forces=None):
         self.x = x
         self.y = y
         self.z = z
         self.constraints = constraints if constraints else [False] * 6
-        self.force = force if force else [0] * 6
+        self.forces = forces if forces else [0] * 6
 
     def __repr__(self):
         return f"Node({self.x}, {self.y}, {self.z})"    
@@ -19,7 +45,7 @@ class Node:
     
     
 class Element:
-    def __init__(self, node_1, node_2, E, nu, A, I_y, I_z, I_rho, J, local_z = None):
+    def __init__(self, node_1, node_2, E, nu, A, I_y, I_z, J, local_z = None):
         self.node_1 = node_1
         self.node_2 = node_2
         self.E = E
@@ -27,7 +53,7 @@ class Element:
         self.A = A
         self.I_y = I_y
         self.I_z = I_z
-        self.I_rho = I_rho
+        # self.I_rho = I_rho
         self.J = J
         
     def __repr__(self):
@@ -50,7 +76,7 @@ class Element:
         rotation = rotation_matrix_3D(self.node_1.coordinates(), self.node_2.coordinates())
         transformation = transformation_matrix_3D(rotation)
 
-        K_global = transformation.T @ k_local @ transformation
+        K_global = transformation.T @ K_local @ transformation
         return K_global
 
 def assemble_global_stiffness_matrix(nodes, elements):
@@ -71,7 +97,7 @@ def assemble_global_stiffness_matrix(nodes, elements):
 
         for i in range(12):
             for j in range(12):
-                K_global[dof_indices[i], dof_indices[j]], += K_e[i,j]
+                K_global[dof_indices[i]][dof_indices[j]] += K_e[i,j]
     return K_global
 '''
 def apply_boundary_conditions(K, F, nodes):
@@ -79,8 +105,9 @@ def apply_boundary_conditions(K, F, nodes):
     for i, node in enumerate(nodes):
         for dof in range(6):
             if node.constraints[dof]:
-                constrained_dofs.append(i * 6 + dof)
-
+                constrained_DOFs.append(i * 6 + dof)
+                
+    constrainted_DOFs.sort()
     K_mod = np.delete(K, constrained_DOFs, axis = 0)
     K_mod = np.delete(K_mod, constrained_DOFs, axis=1)
     F_mod = np.delete(F, constrained_DOFs, axis=0)
@@ -106,7 +133,7 @@ def node_coordinates():
         z = float(input(f"  z-coordinate for Node {i}: "))
 
         print("Select node constraint type: \n 1 - Fixed Node \n 2 - Pinned Node \n 3 - Free Node")
-        node_type = int(input(" Enter the number corresponding to contraint type for Node {i}: "))
+        node_type = int(input(f" Enter the number corresponding to contraint type for Node {i}: "))
 
         if node_type == 1:
             constraints = [True, True, True, True, True, True]
@@ -115,53 +142,39 @@ def node_coordinates():
         else:
             constraints = [False, False, False, False, False, False]
         
-        new_node = Node(x, y, z)
+        new_node = Node(x, y, z, constraints=constraints)
         node_coords.append(new_node)
     
     return node_coords
     
-def define_forces_and_moments():
-    F_x = float(input("Normal force acting in x-direction: ")) 
-    F_y = float(input("Normal force acting in y-direction: ")) 
-    F_z = float(input("Normal force acting in z-direction: ")) 
 
-    F = [F_x, F_y, F_z]
+def apply_forces_and_moments(node_pos, F, M):
 
-    M_x = float(input("Moment force acting in x-direction: ")) 
-    M_y = float(input("Moment force acting in y-direction: ")) 
-    M_z = float(input("Moment force acting in z-direction: ")) 
+    applied_forces = {i: np.zeros(6) for i in range(len(node_pos))}
 
-    M = [M_x, M_y, M_z]
-
-    return F, M
-
-def apply_forces_and_moments(nodes, F, M):
-
-    applied_forces = {i: np.zeros(6) for i in range(len(nodes))}
-
-    force_nodes = input("Enter the node indices where the force vector (F) should be applied (space-separated): ")
+    force_nodes = input("Enter the node index where the force vector (F) should be applied (space-separated): ")
     force_nodes = list(map(int, force_nodes.split())) if force_nodes.strip() else []
 
-    moment_nodes = input("Enter the node indices where the moment vector (M) should be applied (space-separated): ")
+    moment_nodes = input("Enter the node index where the moment vector (M) should be applied (space-separated): ")
     moment_nodes = list(map(int, moment_nodes.split())) if moment_nodes.strip() else []
 
     for i in force_nodes:
-        if 0 <= i < len(nodes):
-            applied_forces[i][:3] = F
+        if 0 <= i < len(node_pos):
+            applied_forces[i][:3] = F[:]
 
     for i in moment_nodes:
-        if 0 <= i < len(nodes):
-            applied_forces[i][3:] = M 
+        if 0 <= i < len(node_pos):
+            applied_forces[i][3:] = M[:]
 
     return applied_forces
 
+
+
+F, M = define_forces_and_moments()
+
 node_pos = node_coordinates()
 
-F = np.zeros((len(nodes), 3))
-M = np.zeros((len(nodes), 3))
-
-
-applied_loads = apply_forces_and_moments(nodes, F, M)
+applied_loads = apply_forces_and_moments(node_pos, F, M)
 
 
 print("Defined Nodal Positions:")
@@ -169,9 +182,9 @@ for i, node in enumerate(node_pos, start=1):
     print(f"Node {i}: {node.coordinates()}")
 
 for node_idx, load in applied_loads.items():
-    print(f"Node {node_idx}: Force = {load[:3]}, Moment = {load[3:]}")
-
+    print(f"Node {node_idx}: Applied Forces = {load[:3]}, Applied Moments = {load[3:]}")
 def define_elements(nodes):
+    
     element_num = int(input("Enter the number of elements present in the system: "))
     element_connect = []
     
@@ -180,13 +193,6 @@ def define_elements(nodes):
         
         node_1_index = int(input(f" Enter the index of Node 1 for Element {i}: "))
         node_2_index = int(input(f" Enter the index of Node 2 for Element {i}: "))
-
-        E = Element.E
-        nu = Element.nu
-        A = Element.A
-        I_y = Element.I_y
-        I_z = Element.I_z
-        J = Element.J
         
         element = Element(nodes[node_1_index], nodes[node_2_index], E, nu, A, I_y, I_z, J)
         element_connect.append(element)
@@ -194,13 +200,15 @@ def define_elements(nodes):
     return element_connect
 
 elements = define_elements(node_pos)
+# K_global = assemble_global_stiffness(node_pos, elements)
 
 print("Defined Elements and Connected Nodes:")
 for i, element in enumerate(elements, start=1):
     node_1, node_2 = element.nodes()
     length = element.length()
     print(f"Element {i}: connects Node({node_1.coordinates()}) and Node({node_2.coordinates()}) with length {length: .1f}")
-print("Global Stiffness Matrix: "K_global)
+
+# print("Global Stiffness Matrix: ", K_global)
 
 
 
