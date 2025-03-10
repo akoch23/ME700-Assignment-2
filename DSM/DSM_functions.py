@@ -4,15 +4,14 @@ import numpy as np
 
 # Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
-b = float(input("Enter the base value for each element: "))
-h = float(input("Enter the height value for each element: "))
-A = b*h
+r = float(input("Enter the radius value for each element: "))
+A = math.pi*(r**2)
 E = float(input("Enter Young's Modulus (E) for each element: ")) 
 nu = float(input("Enter Poisson's ratio (v) for each element: "))
-I_y = h*(b**3/12)
-I_z = b*(h**3/12)
-I_rho = b*(h/12)*(b**2 + h**2)
-J = float(input("Enter torsional constant (J) for each element: "))
+I_y = math.pi*((r**4)/4)
+I_z = math.pi*((r**4)/4)
+I_rho = math.pi*((r**4)/2)
+J = math.pi*((r**4)/2)
 
 def define_forces_and_moments():
     F_x = float(input("Normal force acting in x-direction: ")) 
@@ -132,15 +131,27 @@ def node_coordinates():
         y = float(input(f"  y-coordinate for Node {i}: "))
         z = float(input(f"  z-coordinate for Node {i}: "))
 
-        print("Select node constraint type: \n 1 - Fixed Node \n 2 - Pinned Node \n 3 - Free Node")
+        print("Select node constraint type: \n 1 - Fixed Node \n 2 - Pinned Node \n 3 - Free Node \n 4 - Fixed Node (X only) \n 5 - Fixed Node (Y only) \n 6 - Fixed Node (Z only) \n 7 - Fixed Node (X-rotation only) \n 8 - Fixed Node (Y-rotation only) \n 9 - Fixed Node (Z-rotation only)")
         node_type = int(input(f" Enter the number corresponding to constraint type for Node {i}: "))
 
         if node_type == 1:
             constraints = [True, True, True, True, True, True]
         elif node_type == 2:
             constraints = [True, True, True, False, False, False]
-        else:
+        elif node_type == 3:
             constraints = [False, False, False, False, False, False]
+        elif node_type == 4:
+            constraints = [True, False, False, False, False, False]
+        elif node_type == 5:
+            constraints = [False, True, False, False, False, False]
+        elif node_type == 6:
+            constraints = [False, False, True, False, False, False]
+        elif node_type == 7:
+            constraints = [False, False, False, True, False, False]
+        elif node_type == 8:
+            constraints = [False, False, False, False, True, False]
+        elif node_type == 9:
+            constraints = [False, False, False, False, False, True]
         
         new_node = Node(x, y, z, constraints=constraints)
         node_coords.append(new_node)
