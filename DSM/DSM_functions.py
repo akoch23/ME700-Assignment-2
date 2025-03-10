@@ -52,12 +52,13 @@ class Element:
         self.E = E
         self.nu = nu
         self.A = A
-        self.L = length()
         self.I_y = I_y
         self.I_z = I_z
         # self.I_rho = I_rho
         self.J = J
-        
+        self.local_z = local_z
+        self.L = self.length()
+    
     def __repr__(self):
         return f"Element({self.node_1}, {self.node_2})"
     
