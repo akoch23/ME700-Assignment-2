@@ -26,7 +26,7 @@ class Element:
         self.nu = nu
         self.A = A
         self.I_y = I_y
-        self.I_z I_z
+        self.I_z = I_z
         self.I_rho = I_rho
         self.J = J
         
@@ -119,57 +119,57 @@ def node_coordinates():
         node_coords.append(new_node)
     
     return node_coords
-
+    
 def define_forces_and_moments():
-    F_x = float(input(f" Normal force acting in x-direction: ") 
-    F_y = float(input(f" Normal force acting in y-direction: ") 
-    F_z = float(input(f" Normal force acting in z-direction: ") 
+    F_x = float(input("Normal force acting in x-direction: ")) 
+    F_y = float(input("Normal force acting in y-direction: ")) 
+    F_z = float(input("Normal force acting in z-direction: ")) 
 
     F = [F_x, F_y, F_z]
 
-    M_x = float(input(f" Moment force acting in x-direction: ") 
-    M_y = float(input(f" Moment force acting in y-direction: ") 
-    M_z = float(input(f" Moment force acting in z-direction: ") 
+    M_x = float(input("Moment force acting in x-direction: ")) 
+    M_y = float(input("Moment force acting in y-direction: ")) 
+    M_z = float(input("Moment force acting in z-direction: ")) 
 
     M = [M_x, M_y, M_z]
 
     return F, M
 
 def apply_forces_and_moments(nodes, F, M):
-    
-    force_input = input("Enter the node where Normal forces (F_x, F_y, F_z) are applied: ")
-    if force_input.strip():
-        node_idx = int(force_input)
-        if node_idx < len(nodes):
-            print(f"Force at Node {node_idx}: Fx = {F[node_idx][0]}, Fy = {F[node_idx][1]}, Fz = {F[node_idx][2]}")
-            
-    moment_input = input("Enter the node where Moment forces (M_x, M_y, M_z) are applied: ")
-    if moment_input.strip():
-        node_idx = int(moment_input)
-        if node_idx < len(nodes):
-            print(f"Moment at Node {node_idx}: Mx = {M[node_idx][0]}, My = {M[node_idx][1]}, Mz = {M[node_idx][2]}")
 
-    return F, M
+    applied_forces = {i: np.zeros(6) for i in range(len(nodes))}
+
+    force_nodes = input("Enter the node indices where the force vector (F) should be applied (space-separated): ")
+    force_nodes = list(map(int, force_nodes.split())) if force_nodes.strip() else []
+
+    moment_nodes = input("Enter the node indices where the moment vector (M) should be applied (space-separated): ")
+    moment_nodes = list(map(int, moment_nodes.split())) if moment_nodes.strip() else []
+
+    for i in force_nodes:
+        if 0 <= i < len(nodes):
+            applied_forces[i][:3] = F
+
+    for i in moment_nodes:
+        if 0 <= i < len(nodes):
+            applied_forces[i][3:] = M 
+
+    return applied_forces
 
 node_pos = node_coordinates()
 
 F = np.zeros((len(nodes), 3))
 M = np.zeros((len(nodes), 3))
 
-F, M = define_forces_and_moments(nodes, F, M)
+
+applied_loads = apply_forces_and_moments(nodes, F, M)
 
 
 print("Defined Nodal Positions:")
 for i, node in enumerate(node_pos, start=1):
     print(f"Node {i}: {node.coordinates()}")
 
-print("\nApplied Forces (F):")
-for i, force in enumerate(F):
-    print(f"Node {i}: Fx = {force[0]}, Fy = {force[1]}, Fz = {force[2]}")
-
-print("\nApplied Moments (M):")
-for i, moment in enumerate(M):
-    print(f"Node {i}: Mx = {moment[0]}, My = {moment[1]}, Mz = {moment[2]}")
+for node_idx, load in applied_loads.items():
+    print(f"Node {node_idx}: Force = {load[:3]}, Moment = {load[3:]}")
 
 def define_elements(nodes):
     element_num = int(input("Enter the number of elements present in the system: "))
