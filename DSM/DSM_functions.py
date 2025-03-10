@@ -193,11 +193,17 @@ def define_elements(nodes):
         node_1_index = int(input(f" Enter the index of Node 1 for Element {i}: "))
         node_2_index = int(input(f" Enter the index of Node 2 for Element {i}: "))
 
-        print(f"Enter the local_z vector for Element {i} (as x, y, z components):")
-        x = float(input(f"  x-component of local_z for Element {i}: "))
-        y = float(input(f"  y-component of local_z for Element {i}: "))
-        z = float(input(f"  z-component of local_z for Element {i}: "))
-        local_z = np.array([x, y, z])
+        local_z_input = input(f"Do you want to define a local_z vector for Element {i}? (y/n): ").strip().lower()
+
+        if local_z_input == 'y':
+            print(f"Enter the local_z vector for Element {i} (as x, y, z components):")
+            x = float(input(f"  x-component of local_z for Element {i}: "))
+            y = float(input(f"  y-component of local_z for Element {i}: "))
+            z = float(input(f"  z-component of local_z for Element {i}: "))
+            local_z = np.array([x, y, z])
+
+        else:
+            local_z = None
         
         element = Element(nodes[node_1_index], nodes[node_2_index], E, nu, A, I_y, I_z, J, local_z)
         element_connect.append(element)
