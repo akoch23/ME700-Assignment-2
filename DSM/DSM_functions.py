@@ -4,14 +4,15 @@ import numpy as np
 
 # Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
-r = float(input("Enter the radius value for each element: "))
-A = math.pi*(r**2)
+b = float(input("Enter the base value for each element: "))
+h = float(input("Enter the height value for each element: "))
+A = b*h
 E = float(input("Enter Young's Modulus (E) for each element: ")) 
 nu = float(input("Enter Poisson's ratio (v) for each element: "))
-I_y = math.pi*((r**4)/4)
-I_z = math.pi*((r**4)/4)
-I_rho = math.pi*((r**4)/2)
-J = math.pi*((r**4)/2)
+I_y = h*(b**3/12)
+I_z = b*(h**3/12)
+I_rho = b*(h/12)*(b**2 + h**2)
+J = float(input("Enter torsional constant (J) for each element: "))
 
 def define_forces_and_moments():
     F_x = float(input("Normal force acting in x-direction: ")) 
@@ -252,7 +253,7 @@ free_dof_indices = [i for i in range(len(node_pos) * 6) if i not in constrained_
 
 for i, dof in enumerate(free_dof_indices):
     U_full[dof] = U_mod[i]
-
+    
 # Compute reaction forces
 reaction_forces = compute_reaction_forces(K_global, U_full, constrained_DOFs)
 
@@ -261,6 +262,16 @@ print("\nNodal Displacements:")
 for i in range(len(node_pos)):
     print(f"Node {i}: Displacements = {U_full[i*6:i*6+3]}, Rotations = {U_full[i*6+3:i*6+6]}")
 
-print("\nReaction Forces at Constrained DOFs:")
-for dof in constrained_DOFs:
-    print(f"DOF {dof}: {reaction_forces[dof]}")
+# Compute total force/moment at each node (includes both applied and reaction forces)
+total_forces = np.zeros(len(node_pos) * 6)
+
+for i in range(len(node_pos) * 6):
+    if i in constrained_DOFs:
+        total_forces[i] = reaction_forces[i]  # Assign reaction force at constrained DOFs
+    else:
+        total_forces[i] = F_global[i]  # Assign applied force at non-constrained DOFs
+
+# Display results in a node-based format
+print("\nNodal Forces and Moments:")
+for i in range(len(node_pos)):
+    print(f"Node {i}: Forces = {total_forces[i*6:i*6+3]}, Moments = {total_forces[i*6+3:i*6+6]}")
