@@ -4,9 +4,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from .direct_stiffness_method import Frame3DSolver, rotation_matrix_3D, transformation_matrix_3D
 
-# -----------------------
-# Computing Local Geometric Stiffness Matrix for 3D Beam Element
-# -----------------------
+
+# Compute Local Geometric Stiffness Matrix for 3D Beam Element (using math_util function for k_g)
 def local_geometric_stiffness_matrix_3D_beam(L, A, I_rho, Fx2, Mx2, My1, Mz1, My2, Mz2):
     """
     local element geometric stiffness matrix
@@ -85,9 +84,8 @@ def local_geometric_stiffness_matrix_3D_beam(L, A, I_rho, Fx2, Mx2, My1, Mz1, My
     k_g[11, 11] = 2.0 * Fx2 * L / 15.0
     return k_g
 
-# -----------------------
-# Computing Local Stiffness Matrix without Interaction Terms
-# -----------------------
+
+# Compute Local Stiffness Matrix without Interaction Terms (using math_util function for k_g)
 def local_geometric_stiffness_matrix_3D_beam_without_interaction_terms(L, A, I_rho, Fx2):
     """
     local element geometric stiffness matrix
@@ -140,25 +138,10 @@ def local_geometric_stiffness_matrix_3D_beam_without_interaction_terms(L, A, I_r
     k_g[11, 11] = 2.0 * Fx2 * L / 15.0
     return k_g
 
-# -----------------------
-# Extracting Moments and Forces for Calculating Stiffness with Interaction terms
-# -----------------------
+
+# Extracting Moments and Forces for Calculating Geometric Stiffness (with Interaction Terms)
 def extract_moments_from_internal_forces(internal_forces, element):
-    """
-    Extract the axial force and moments from internal forces for a given element.
 
-    Parameters
-    ----------
-    internal_forces : dict
-        Internal forces for each element.
-    element : tuple
-        Tuple of (node1, node2) defining the element.
-
-    Returns
-    -------
-    Fx2, Mx2, My1, Mz1, My2, Mz2 : float
-        Extracted axial force and moments.
-    """
     forces = internal_forces[element]
 
     # Extract forces and moments from local coordinate system
@@ -171,9 +154,8 @@ def extract_moments_from_internal_forces(internal_forces, element):
 
     return Fx2, Mx2, My1, Mz1, My2, Mz2
 
-# -----------------------
-# Creating Class for Elastic Critical Load Solver
-# -----------------------
+
+# Create Class for Elastic Critical Load Solver
 class ElasticCriticalLoadSolver:
     """
     Elastic Critical Load Solver for 3D Frames using the Direct Stiffness Method.
@@ -186,9 +168,8 @@ class ElasticCriticalLoadSolver:
         Parameters
         ----------
         frame_solver : Frame3DSolver
-            Instance of Frame3DSolver containing frame geometry, 
-            material properties, loads, and boundary conditions.
-        use_interaction_terms : bool, optional
+            Instance of Frame3DSolver containing frame geometry, material properties, loads, and boundary conditions.
+            use_interaction_terms : bool, optional
             If True, uses geometric stiffness with interaction terms.
             If False, uses geometric stiffness without interaction terms.
         """
@@ -197,19 +178,10 @@ class ElasticCriticalLoadSolver:
         self.ndof = frame_solver.ndof
         self.global_geometric_stiffness = np.zeros((self.ndof, self.ndof))
         self.fixed_dof = None  # Store fixed DOFs inside the class
-# -----------------------
-# Assembling Geometric Stiffness
-# -----------------------    
-    def assemble_geometric_stiffness(self, d: np.ndarray):
-        """
-        Assemble the global geometric stiffness matrix using local geometric stiffness matrices.
 
-        Parameters
-        ----------
-        d : np.ndarray
-            Global displacement vector from the static analysis.
-        """
-        # Compute internal forces first
+# Assemble Geometric Stiffness
+    def assemble_geometric_stiffness(self, d: np.ndarray):
+        # Compute internal forces
         internal_forces = self.frame_solver.compute_internal_forces_and_moments(d)
 
         for elem in self.frame_solver.elements:
@@ -226,7 +198,7 @@ class ElasticCriticalLoadSolver:
             gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
                                        float(coord2[0]), float(coord2[1]), float(coord2[2]))
             Gamma = transformation_matrix_3D(gamma)            
-            # Choose stiffness calculation method
+            # Select stiffness calculation method
             if self.use_interaction_terms:
                 k_geo = local_geometric_stiffness_matrix_3D_beam(
                     L, A, I_rho, Fx2, Mx2, My1, Mz1, My2, Mz2
@@ -245,21 +217,9 @@ class ElasticCriticalLoadSolver:
                 for j in range(12):
                     self.global_geometric_stiffness[dof_indices[i], dof_indices[j]] += k_geo_global[i, j]
 
-# -----------------------
-# Solving Eigenvalue Problem
-# -----------------------        
-    def solve_eigenvalue_problem(self):
-        """
-        Solve the elastic critical load problem using:
-        (K_e_ff + λ K_g_ff) Δ = 0.
 
-        Returns
-        -------
-        eigenvalues : np.ndarray
-            Array of eigenvalues representing critical load factors.
-        eigenvectors : np.ndarray
-            Array of eigenvectors representing buckling mode shapes.
-        """
+# Solving For Eigenvalues (To solve Elastic Critical Load, using (K_e_ff + λ K_g_ff) Δ = 0))
+    def solve_eigenvalue_problem(self):
         try:
             # Solve for static displacements
             d, _ = self.frame_solver.solve()
@@ -289,7 +249,7 @@ class ElasticCriticalLoadSolver:
                 raise ValueError("Boundary conditions function did not return expected values.")
             
             K_e_ff, _, free_dof, fixed_dof = bc_result  # Extract fixed DOFs
-            self.fixed_dof = fixed_dof  # 🔥 Store it for later use
+            self.fixed_dof = fixed_dof  # Stored for later use
 
             bc_result = self.frame_solver.apply_boundary_conditions(self.global_geometric_stiffness, np.zeros(self.ndof))
             if bc_result is None or len(bc_result) < 4:
@@ -334,14 +294,13 @@ class ElasticCriticalLoadSolver:
             for mode in range(eigenvectors.shape[1]):
                 full_mode_shapes[free_dof, mode] = eigenvectors[:, mode]  # Map free DOFs back
 
-            # 🔥 Double-check that fixed DOFs are actually zero
+            # Double-check that fixed DOFs are actually zero
             full_mode_shapes[fixed_dof, :] = 0  # Explicitly set them to zero
 
             # Debugging print to verify fixed DOFs are zero
             for dof in fixed_dof:
                 if not np.allclose(full_mode_shapes[dof, :], 0):
-                    #print(f"⚠️ Fixed DOF {dof} is not zero! Setting it again.")
-                    full_mode_shapes[dof, :] = 0  # Redundant safety check
+                    #print(f"Fixed DOF {dof} is not zero! Resetting")
 
             #print(f" Fixed DOFs enforced correctly. Shape of mode shapes: {full_mode_shapes.shape}")
 
@@ -351,26 +310,8 @@ class ElasticCriticalLoadSolver:
             print(f"Error in solve_eigenvalue_problem: {e}")
             raise
 
-# -----------------------
-# Plotting Buckling Mode
-# -----------------------    
-
+# Plot Buckling Mode (using Hermite Shape Function) 
 def hermite_beam_shape_functions(s, L):
-    """
-    Compute cubic Hermite shape functions for beam bending.
-
-    Parameters
-    ----------
-    s : float
-        Parametric coordinate along the element (0 ≤ s ≤ L).
-    L : float
-        Element length.
-
-    Returns
-    -------
-    H1, H2, H3, H4 : float
-        Hermite shape function values at `s`.
-    """
     xi = s / L  # Normalized coordinate (0 ≤ xi ≤ 1)
     
     H1 = 1 - 3 * xi**2 + 2 * xi**3
@@ -380,21 +321,8 @@ def hermite_beam_shape_functions(s, L):
 
     return H1, H2, H3, H4
 
+# Plot the buckled structure using True Hermite Cubic Interpolation for 3D beam bending.
 def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100):
-    """
-    Plot the buckled structure using **true Hermite cubic interpolation** for 3D beam bending.
-
-    Parameters
-    ----------
-    frame_solver : Frame3DSolver
-        Instance of Frame3DSolver containing frame geometry and elements.
-    mode_shape : np.ndarray
-        Eigenvector corresponding to a buckling mode, representing nodal displacements and rotations.
-    scale_factor : float, optional
-        Factor to scale the mode shape for better visualization (default is 1.0).
-    n_points : int, optional
-        Number of points per element for interpolation (default is 50).
-    """
     fig = plt.figure(figsize=(12, 10))
     ax = fig.add_subplot(111, projection='3d')
 
@@ -421,7 +349,7 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
         all_y.extend([coord1[1], coord2[1]])
         all_z.extend([coord1[2], coord2[2]])
 
-    # Plot deformed structure using **true Hermite shape functions**
+    # Plot deformed structure using true Hermite Shape Functions
     for elem in frame_solver.elements:
         node1, node2, _ = elem
         idx1 = frame_solver.node_index_map[node1] * 6
@@ -441,7 +369,7 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
         L = np.linalg.norm(coord2 - coord1)
         s_vals = np.linspace(0, L, n_points)
 
-        # Interpolated coordinates using Hermite cubic shape functions
+        # Interpolated coordinates using Hermite Cubic Shape functions
         x_hermite, y_hermite, z_hermite = [], [], []
 
         for s in s_vals:
@@ -463,7 +391,7 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
         all_y.extend(y_hermite)
         all_z.extend(z_hermite)
 
-    # Set equal axis ranges
+    # Set equivalent axis ranges
     min_x, max_x = min(all_x), max(all_x)
     min_y, max_y = min(all_y), max(all_y)
     min_z, max_z = min(all_z), max(all_z)
@@ -478,7 +406,7 @@ def plot_buckling_mode(frame_solver, mode_shape, scale_factor=1.0, n_points=100)
     ax.set_ylim(mid_y - max_range, mid_y + max_range)
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
-    # Labels and title
+    # Labels and Title
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
