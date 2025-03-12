@@ -1,0 +1,4 @@
+ChatGPT-4o was used to help develop functions specifically for the Direct Stiffness Method Main File.
+ChatGPT-4o was used to help evaluate certain functions and the tests functions that utilized them.
+ChatGPT-4o was used to simplify certain elements of functions and improve overall file structure.
+ChatGPT-4o was used to help explain the logical progression of certain code/data structures as well as how to best implement elements of the mathematical models for the solvers in both parts of the assignment.
