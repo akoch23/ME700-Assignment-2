@@ -45,7 +45,7 @@ elements = [
     (2, 4, section_props_element_1)
 ]
 
-Step 4: Apply Nodal Loads
+# Step 4: Apply Nodal Loads
 syntax:
 loads = {
   nodeID: np.array([Fx, Fy, Fz, Mx, My, Mz])
@@ -57,7 +57,7 @@ loads = {
     2: np.array([0, 0, 0, 0.5, -0.1, 0.3])
 }
 
-Step 5: Apply Boundary Conditions (Constrain Nodal DOFs)
+# Step 5: Apply Boundary Conditions (Constrain Nodal DOFs)
 syntax:
 supports = {
   nodeID: [True, True, True, True, True, True], # Completely fixed
