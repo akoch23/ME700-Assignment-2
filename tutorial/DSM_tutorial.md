@@ -1,4 +1,4 @@
-Step 1: Define Nodes
+# Step 1: Define Nodes
 syntax: 
 nodes = {node ID: np.array([x, y, z])
 
@@ -11,7 +11,7 @@ nodes = {
     4: np.array([6,9,5])
 }
 
-Step 2: Define Element Properties
+# Step 2: Define Element Properties
 syntax: 
 section_props_element_# = {"E": #, "nu": #, "A": #, "Iz": #, "Iy": #, "J": #, "local_z": np.array([#, #, #])}
 
@@ -28,9 +28,9 @@ section_props_element_3 = {
     "E": 210e9, "nu": 0.3, "A": 0.01, "Iz": 8.33e-6, "Iy": 8.33e-6, "J": 1.67e-5, "local_z": np.array([0.0, 0.0, 1.0])
 }
 
-# Use less/add more elements as needed
+Use less/add more elements as needed
 
-Step 3: Define Elements
+# Step 3: Define Elements
 syntax: 
 elements = [
   (nodeID1, nodeID2, section_props_element_1),  # first element
@@ -71,7 +71,7 @@ supports = {
     3: [True, True, True, True, True, True]
 }
 
-Step 6: Use Direct Stiffness Method Solver to solve for Nodal Displacements/Rotations and Reaction Forces/Moments
+# Step 6: Use Direct Stiffness Method Solver to solve for Nodal Displacements/Rotations and Reaction Forces/Moments
 
 Initialize solver:
 solver = dsm.Frame3DSolver(nodes, elements, loads, supports)
@@ -79,7 +79,8 @@ displacements, reactions = solver.solve()
 
 disp_matrix = displacements.reshape((-1, 6))
 reac_matrix = reactions.reshape((-1, 6))
-# Create a dictionary for displacements and reactions
+
+Create a dictionary for displacements and reactions
 disp_dict = {node: disp_matrix[i] for i, node in enumerate(nodes)}
 react_dict = {node: reac_matrix[i] for i, node in enumerate(nodes)}
 
@@ -91,7 +92,7 @@ for node, disp in disp_dict.items():
     
 print("\nReaction Forces and Moments at Supports:")
 for node, react in react_dict.items():
-  # Only display reactions for nodes with boundary conditions
+  Only display reactions for nodes with boundary conditions
   print(f"Node {node}: [Fx: {react[0]:.10f}, Fy: {react[1]:.10f}, Fz: {react[2]:.10f}, "
         f"Mx: {react[3]:.10f}, My: {react[4]:.10f}, Mz: {react[5]:.10f}]")
 
@@ -110,7 +111,7 @@ Node 2: [Fx: 0.0000000000, Fy: 0.0000000000, Fz: -0.0000000000, Mx: -0.000000000
 Node 3: [Fx: -0.0235127129, Fy: 0.1379482485, Fz: 0.0253249828, Mx: -0.4116107460, My: 0.2981182342, Mz: -0.3614403375]
 Node 4: [Fx: -0.0764872871, Fy: -0.0879482485, Fz: 0.0430028175, Mx: 0.0000000000, My: -0.0000000000, Mz: 0.0000000000]
 
-Step 7: Plotting Reaction Forces/Momenets for Individual Elements and Deformed Structure
+# Step 7: Plotting Reaction Forces/Momenets for Individual Elements and Deformed Structure
 
 Initialize plot function (Elements):
 internal_forces = solver.compute_internal_forces_and_moments(displacements)
@@ -119,9 +120,9 @@ solver.plot_internal_forces_and_moments(internal_forces)
 Initialize plot function (Structure)
 solver.plot_deformed_shape(displacements, scale=25)
 
-Step 8: Computing Critical Load Factor and Plooting Buckling Mode Shapes
+# Step 8: Computing Critical Load Factor and Plooting Buckling Mode Shapes
 
-# Define nodes and elements for buckling analysis
+Define nodes and elements for buckling analysis
 nodes_ecls = {
     0: np.array([0.0, 0.0, 0.0]),
     1: np.array([30.0, 40.0, 0.0])
@@ -142,7 +143,7 @@ supports_ecls = {
 
 frame_solver_ecla = dsm.Frame3DSolver(nodes_ecls, elements_ecls, loads_ecls, supports_ecls)
 
-# Solve for buckling modes WITH and WITHOUT the interaction terms
+Solve for buckling modes WITH and WITHOUT the interaction terms
 for use_interaction in [True, False]:
     solver_type = "Without Interaction Terms" if not use_interaction else "With Interaction Terms"
     print(f"Solving for {solver_type}")
