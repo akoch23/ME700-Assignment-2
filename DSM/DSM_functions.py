@@ -4,8 +4,7 @@ import scipy
 from scipy.linalg import eig
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-%run DSM_math_util.ipynb
+import math_utils
 
 # Given Node positions, 3D Force, 3D Moment, b, h, E, v, J, E0, E1, A, I_y, I_z, I_rho
 
@@ -148,10 +147,10 @@ def assemble_global_geometric_stiffness_matrix(nodes, elements, A, I_rho):
         # Local geometric stiffness matrix for this element
         forces_and_moments_raw = element.get_forces_and_moments()  # Define or extract forces and moments
         
-        Fx1 = forces_and_moments_raw[0]
-        Fy1 = forces_and_moments_raw[1]
-        Fz1 = forces_and_moments_raw[2]
-        Mx1 = forces_and_moments_raw[3]
+        Fx1 = forces_and_moments_raw[0]   # Force in X at node 1
+        Fy1 = forces_and_moments_raw[1]   # Force in Y at node 1
+        Fz1 = forces_and_moments_raw[2]   # Force in Z at node 1
+        Mx1 = forces_and_moments_raw[3]   # Moment in X at node 1
         My1 = forces_and_moments_raw[4]   # Moment in Y at node 1
         Mz1 = forces_and_moments_raw[5]   # Moment in Z at node 1
         Fx2 = forces_and_moments_raw[6]   # Force in X at node 2
