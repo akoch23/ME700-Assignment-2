@@ -3,12 +3,12 @@ syntax:
 nodes = {node ID: np.array([x, y, z])
 
 Example:
-nodes = {
-    0: np.array([0, 0, 0]),
-    1: np.array([-5, 1, 10]),
-    2: np.array([-1, 5, 13]),
-    3: np.array([-3,7,11]),
-    4: np.array([6,9,5])
+nodes = {  
+    0: np.array([0, 0, 0]),  
+    1: np.array([-5, 1, 10]),  
+    2: np.array([-1, 5, 13]),  
+    3: np.array([-3,7,11]),  
+    4: np.array([6,9,5])  
 }
 
 # Step 2: Define Element Properties
