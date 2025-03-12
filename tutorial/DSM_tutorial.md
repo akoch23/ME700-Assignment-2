@@ -38,30 +38,30 @@ elements = [
 ]
 
 Example:
-elements = [
-    (0, 1, section_props_element_1),
-    (1, 2, section_props_element_1),
-    (2, 3, section_props_element_1),
-    (2, 4, section_props_element_1)
+elements = [  
+(0, 1, section_props_element_1),  
+(1, 2, section_props_element_1),  
+(2, 3, section_props_element_1),  
+(2, 4, section_props_element_1)  
 ]
 
 # Step 4: Apply Nodal Loads
 syntax:
-loads = {
-  nodeID: np.array([Fx, Fy, Fz, Mx, My, Mz])
+loads = {  
+nodeID: np.array([Fx, Fy, Fz, Mx, My, Mz])  
 }
 
 Example:
-loads = {
-    1: np.array([0.1, -0.05, -0.075, 0, 0, 0]),
-    2: np.array([0, 0, 0, 0.5, -0.1, 0.3])
+loads = {  
+1: np.array([0.1, -0.05, -0.075, 0, 0, 0]),  
+2: np.array([0, 0, 0, 0.5, -0.1, 0.3])  
 }
 
 # Step 5: Apply Boundary Conditions (Constrain Nodal DOFs)
-syntax:
-supports = {
-  nodeID: [True, True, True, True, True, True], # Completely fixed
-  nodeID: [False, True, True, False, False, True] # Motion allowed in x direction and rotation allowed along the x and y axis
+syntax:  
+supports = {  
+nodeID: [True, True, True, True, True, True], # Completely fixed  
+nodeID: [False, True, True, False, False, True] # Motion allowed in x direction and rotation allowed along the x and y axis  
 }
 
 Example:
