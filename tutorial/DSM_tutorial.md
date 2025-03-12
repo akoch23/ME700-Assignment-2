@@ -120,7 +120,7 @@ solver.plot_internal_forces_and_moments(internal_forces)
 Initialize plot function (Structure)  
 solver.plot_deformed_shape(displacements, scale=25)  
 
-# Step 8: Computing Critical Load Factor and Plooting Buckling Mode Shapes  
+# Step 8: Computing Critical Load Factor and Plotting Buckling Mode Shapes  
 
 Define nodes and elements for buckling analysis  
 nodes_ecls = {  
@@ -153,8 +153,7 @@ for use_interaction in [True, False]:
     eigenvalues, eigenvectors = ecl_solver.solve_eigenvalue_problem()  
 
     mode_shape = eigenvectors[:, 0]  
-
-# Step 9: Plot the first buckling mode using Hermite shape functions  
+- Plot the first buckling mode using Hermite shape functions  
 print("Critical Load Factors:", eigenvalues)  
 print(f"Lowest Critical Load Factor: {np.min(eigenvalues)}")  
 ecls.plot_buckling_mode(ecl_solver.frame_solver, mode_shape, scale_factor=5)  
