@@ -1,33 +1,12 @@
-"""
-3D Frame Solver using the Direct Stiffness Method
-
-Inputs:
-    - Frame geometry: node locations and element connectivity.
-    - Element section properties: E, ν, A, Iz, Iy, Iρ, J, local z axis.
-      (Note: Iρ is not used in this basic formulation.)
-    - Nodal loads: forces and moments applied at given nodes.
-    - Boundary conditions: prescribed (supported) displacements/rotations at nodes.
-
-Outputs:
-    - Nodal displacements and rotations.
-    - Reaction forces and moments at the supports.
-    
-This script assembles the global stiffness matrix for the structure, applies the
-boundary conditions, solves the reduced system for displacements, and then computes
-the support reactions.
-"""
-
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from scipy.linalg import eig
 from mpl_toolkits.mplot3d import Axes3D
 
-# -----------------------
-# Computing Local Stiffness Matrix
-# -----------------------
-def local_elastic_stiffness_matrix_3D_beam(E: float, nu: float, A: float, L: float,
-                                           Iy: float, Iz: float, J: float) -> np.ndarray:
+
+# Compute Local Stiffness Matrix
+def local_elastic_stiffness_matrix_3D_beam(E: float, nu: float, A: float, L: float, Iy: float, Iz: float, J: float) -> np.ndarray:
     """
     Compute the local elastic stiffness matrix for a 3D beam element.
     (Based on McGuire's Matrix Structural Analysis 2nd Edition, p.73)
@@ -93,21 +72,10 @@ def local_elastic_stiffness_matrix_3D_beam(E: float, nu: float, A: float, L: flo
     k_e[10, 4] = E * 2.0 * Iy / L
     
     return k_e
-
-def check_unit_vector(vec: np.ndarray):
-    """
-    Verify that the input vector is a unit vector.
     
-    Parameters
-    ----------
-    vec : np.ndarray
-        The vector to check.
-        
-    Raises
-    ------
-    ValueError
-        If the vector is not of unit length.
-    """
+# Verify that the input vector is a unit vector
+def check_unit_vector(vec: np.ndarray):
+
     # Error Handling
     if not isinstance(vec, np.ndarray):
         raise TypeError("vec must be a numpy array.")
@@ -117,22 +85,9 @@ def check_unit_vector(vec: np.ndarray):
     if not np.isclose(np.linalg.norm(vec), 1.0):
         raise ValueError("Expected a unit vector for reference vector.")
 
+# Check if two vectors are parallel
 def check_parallel(vec_1: np.ndarray, vec_2: np.ndarray):
-    """
-    Check if two vectors are parallel.
-    
-    Parameters
-    ----------
-    vec_1 : np.ndarray
-        First vector.
-    vec_2 : np.ndarray
-        Second vector.
-        
-    Raises
-    ------
-    ValueError
-        If the vectors are parallel.
-    """
+  
     # Error Handling
     if not (isinstance(vec_1, np.ndarray) and isinstance(vec_2, np.ndarray)):
         raise TypeError("vec_1 and vec_2 must be numpy arrays.")
@@ -142,12 +97,9 @@ def check_parallel(vec_1: np.ndarray, vec_2: np.ndarray):
     if np.isclose(np.linalg.norm(np.cross(vec_1, vec_2)), 0.0):
         raise ValueError("Reference vector is parallel to beam axis.")
 
-# -----------------------
-# Computing Rotation Matrix
-# -----------------------
-def rotation_matrix_3D(x1: float, y1: float, z1: float,
-                       x2: float, y2: float, z2: float,
-                       v_temp: np.ndarray = None) -> np.ndarray:
+
+# Compute Rotation Matrix
+def rotation_matrix_3D(x1: float, y1: float, z1: float, x2: float, y2: float, z2: float, v_temp: np.ndarray = None) -> np.ndarray:
     """
     Compute the 3D rotation matrix for a beam element.
     (Based on Chapter 5.1 of McGuire's Matrix Structural Analysis 2nd Edition)
@@ -165,7 +117,7 @@ def rotation_matrix_3D(x1: float, y1: float, z1: float,
     nxp = (z2 - z1) / L
     local_x = np.asarray([lxp, mxp, nxp])
 
-    # Choose a vector to help define the local coordinate system.
+    # Selection of vector to define the local coordinate system
     if v_temp is None:
         if np.isclose(lxp, 0.0) and np.isclose(mxp, 0.0):
             v_temp = np.array([0.0, 1.0, 0.0])
@@ -175,15 +127,15 @@ def rotation_matrix_3D(x1: float, y1: float, z1: float,
         check_unit_vector(v_temp)
         check_parallel(local_x, v_temp)
     
-    # Compute the local y axis.
+    # Compute the local y axis
     local_y = np.cross(v_temp, local_x)
     local_y = local_y / np.linalg.norm(local_y)
 
-    # Compute the local z axis.
+    # Compute the local z axis
     local_z = np.cross(local_x, local_y)
     local_z = local_z / np.linalg.norm(local_z)
 
-    # Assemble the rotation matrix.
+    # Assemble the rotation matrix
     gamma = np.vstack((local_x, local_y, local_z))
     
     # Error Handling
@@ -192,9 +144,8 @@ def rotation_matrix_3D(x1: float, y1: float, z1: float,
     
     return gamma
 
-# -----------------------
-# Computing Transformation Matrix in 3D
-# -----------------------
+
+# Compute Transformation Matrix in 3D
 def transformation_matrix_3D(gamma: np.ndarray) -> np.ndarray:
     """
     Compute the 12x12 transformation matrix for a 3D beam element.
@@ -202,9 +153,9 @@ def transformation_matrix_3D(gamma: np.ndarray) -> np.ndarray:
     """
     # Error Handling
     if not isinstance(gamma, np.ndarray):
-        raise TypeError("gamma must be a numpy array.")
+        raise TypeError("gamma must be a numpy array")
     if gamma.shape != (3, 3):
-        raise ValueError("gamma must be a 3x3 rotation matrix.")
+        raise ValueError("gamma must be a 3x3 rotation matrix")
     
     Gamma = np.zeros((12, 12))
     Gamma[0:3, 0:3] = gamma
@@ -214,14 +165,9 @@ def transformation_matrix_3D(gamma: np.ndarray) -> np.ndarray:
     
     return Gamma
 
-# -----------------------
-# Creating Class for the Solver
-# -----------------------
-class Frame3DSolver:
-    """
-    A solver for 3D frame analysis using the Direct Stiffness Method.
-    """
-    
+
+# Create Class for the Solver
+class Frame3DSolver:    
     def __init__(self, nodes: dict, elements: list, loads: dict, supports: dict):
         # Error Handling
         if not isinstance(nodes, dict):
@@ -244,13 +190,9 @@ class Frame3DSolver:
 
         self.node_index_map = {node_id: i for i, node_id in enumerate(self.node_ids)}
     
-# -----------------------
-# Assembling Global Stiffness Matrix
-# -----------------------
+
+# Assemble Global Stiffness Matrix
     def assemble_stiffness(self) -> np.ndarray:
-        """
-        Assemble and return the global stiffness matrix.
-        """
         K = np.zeros((self.ndof, self.ndof))
         
         for elem in self.elements:
@@ -273,9 +215,7 @@ class Frame3DSolver:
             J = props["J"]
             local_z = props.get("local_z", None)
             
-            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
-                                       float(coord2[0]), float(coord2[1]), float(coord2[2]),
-                                       v_temp=local_z)
+            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]), float(coord2[0]), float(coord2[1]), float(coord2[2]), v_temp=local_z)
             Gamma = transformation_matrix_3D(gamma)
             k_local = local_elastic_stiffness_matrix_3D_beam(E, nu, A, L, Iy, Iz, J)
             k_global = Gamma.T @ k_local @ Gamma
@@ -291,18 +231,10 @@ class Frame3DSolver:
                     
         return K
 
-# -----------------------
-# Assembling Load Vector
-# -----------------------
+
+# Assemble Load Vector
     def assemble_load_vector(self) -> np.ndarray:
-        """
-        Assemble and return the global load vector.
         
-        Returns
-        -------
-        F : np.ndarray
-            Global load vector of size (ndof,).
-        """
         # Error Handling
         if not isinstance(self.loads, dict):
             raise TypeError("loads must be a dictionary.")
@@ -319,31 +251,10 @@ class Frame3DSolver:
         
         return F
 
-# -----------------------
-# Applying Boundary Conditions
-# -----------------------
+
+# Apply Boundary Conditions (Partition global system into free and fixed DOFs)
     def apply_boundary_conditions(self, K: np.ndarray, F: np.ndarray):
-        """
-        Apply boundary conditions by partitioning the global system into free and fixed DOFs.
-        
-        Parameters
-        ----------
-        K : np.ndarray
-            The global stiffness matrix.
-        F : np.ndarray
-            The global load vector.
-            
-        Returns
-        -------
-        K_reduced : np.ndarray
-            Reduced stiffness matrix corresponding to free DOFs.
-        F_reduced : np.ndarray
-            Reduced load vector corresponding to free DOFs.
-        free_dof : np.ndarray
-            Array of indices corresponding to free DOFs.
-        fixed_dof : np.ndarray
-            Array of indices corresponding to fixed DOFs.
-        """
+    
         # Error Handling
         if not isinstance(K, np.ndarray) or not isinstance(F, np.ndarray):
             raise TypeError("K and F must be numpy arrays.")
@@ -375,9 +286,8 @@ class Frame3DSolver:
         F_reduced = F[free_dof]
         
         return K_reduced, F_reduced, free_dof, fixed_dof
-# -----------------------
-# Computing Required Quantities
-# -----------------------
+
+# Compute Required Quantities (Assemble stiffness matrix and load vector, apply boundary conditions, and solve for nodal displacements and support reaction forces)
     def solve(self):
         """
         Assemble the system, apply boundary conditions, and solve for nodal displacements.
@@ -429,23 +339,8 @@ class Frame3DSolver:
         
         return d, reactions
 
-# -----------------------
 # Compute Internal Forces and Moments
-# -----------------------
     def compute_internal_forces_and_moments(self, d: np.ndarray):
-        """
-        Compute internal forces and moments for each member in local coordinates.
-        
-        Parameters
-        ----------
-        d : np.ndarray
-            Global displacement vector.
-            
-        Returns
-        -------
-        internal_forces : dict
-            Internal forces and moments in local coordinates for each element.
-        """
         internal_forces = {}
         
         for elem in self.elements:
@@ -463,9 +358,7 @@ class Frame3DSolver:
             J = props["J"]
             local_z = props.get("local_z", None)
             
-            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]),
-                                    float(coord2[0]), float(coord2[1]), float(coord2[2]),
-                                    v_temp=local_z)
+            gamma = rotation_matrix_3D(float(coord1[0]), float(coord1[1]), float(coord1[2]), float(coord2[0]), float(coord2[1]), float(coord2[2]), v_temp=local_z)
             #print(f"Rotation matrix (gamma) for element ({node1}, {node2}):\n{gamma}\n")
             Gamma = transformation_matrix_3D(gamma)
             k_local = local_elastic_stiffness_matrix_3D_beam(E, nu, A, L, Iy, Iz, J)
@@ -473,7 +366,7 @@ class Frame3DSolver:
             idx1 = self.node_index_map[node1] * 6
             idx2 = self.node_index_map[node2] * 6
             dof_indices = np.array([idx1, idx1+1, idx1+2, idx1+3, idx1+4, idx1+5,
-                                    idx2, idx2+1, idx2+2, idx2+3, idx2+4, idx2+5])
+                                idx2, idx2+1, idx2+2, idx2+3, idx2+4, idx2+5])
             
             d_elem = d[dof_indices]
             d_local = Gamma @ d_elem
@@ -483,18 +376,9 @@ class Frame3DSolver:
             f_global = Gamma.T @ internal_forces[(node1, node2)]
         return internal_forces
 
-# -----------------------
-# Plot Internal Forces and Moments
-# -----------------------
+
+# Plot Internal Forces and Moments for each member in local coordinates
     def plot_internal_forces_and_moments(self, internal_forces: dict):
-        """
-        Plot internal forces and moments for each member in local coordinates.
-        
-        Parameters
-        ----------
-        internal_forces : dict
-            Internal forces and moments in local coordinates for each element.
-        """
         for elem, forces in internal_forces.items():
             # Unpack the tuple (node1, node2)
             node1, node2 = elem
@@ -530,20 +414,9 @@ class Frame3DSolver:
 
             plt.show()
 
-# -----------------------
-# Plot Deformed Shape
-# -----------------------
+
+# Plot both Undeformed and Deformed Structure
     def plot_deformed_shape(self, d: np.ndarray, scale: float = 1.0):
-        """
-        Plot the undeformed and deformed shape of the whole structure.
-        
-        Parameters
-        ----------
-        d : np.ndarray
-            Global displacement vector.
-        scale : float, optional
-            Scaling factor for the deformations.
-        """
         fig = plt.figure(figsize=(15, 15))
         ax = fig.add_subplot(111, projection='3d')
         
