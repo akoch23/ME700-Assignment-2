@@ -154,7 +154,7 @@ for use_interaction in [True, False]:
 
     mode_shape = eigenvectors[:, 0]  
 
-    # Plot the first buckling mode using Hermite shape functions  
-    print("Critical Load Factors:", eigenvalues)  
-    print(f"Lowest Critical Load Factor: {np.min(eigenvalues)}")  
-    ecls.plot_buckling_mode(ecl_solver.frame_solver, mode_shape, scale_factor=5)  
+# Step 9: Plot the first buckling mode using Hermite shape functions  
+print("Critical Load Factors:", eigenvalues)  
+print(f"Lowest Critical Load Factor: {np.min(eigenvalues)}")  
+ecls.plot_buckling_mode(ecl_solver.frame_solver, mode_shape, scale_factor=5)  
