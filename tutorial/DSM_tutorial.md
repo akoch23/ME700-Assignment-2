@@ -33,8 +33,8 @@ Use less/add more elements as needed
 # Step 3: Define Elements
 syntax: 
 elements = [
-(nodeID1, nodeID2, section_props_element_1),  # first element 
-(nodeID1, nodeID2, section_props_element_2)   # second element 
+(nodeID1, nodeID2, section_props_element_1),  # first element  
+(nodeID1, nodeID2, section_props_element_2)   # second element
 ]
 
 Example:
