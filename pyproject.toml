@@ -3,13 +3,14 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ME700-Assignment-2-Part-1"
-version = "0.1.0"
+name = "DSM"
+version = "0.0.0"
 authors = [
   { name="Alexander Kochling", email="akoch23@bu.edu" },
 ]
-description = "Direct Stiffness Method Solver"
+description = "DSM workflow"
 readme = "README.md"
+license = { file="LICENSE" }
 requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -21,10 +22,8 @@ dependencies = [
     "numpy==1.26.4",
     "pytest==7.1.2",
     "pytest-cov==3.0.0",
+    "scipy==1.12.0"
 ]
 
-[tool.setuptools.packages.find]
-where = ["DSM"]
-
 [project.urls]
-"Homepage" = "https://github.com/akoch23/ME700-Assignment-1-Part-1/tree/main"
+"Homepage" = "https://github.com/akoch23/ME700-Assignment-2/tree/main"
