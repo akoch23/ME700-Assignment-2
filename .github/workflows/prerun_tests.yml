@@ -20,14 +20,14 @@ jobs:
     strategy:
       matrix:
         platform: [macos-latest, ubuntu-latest, windows-latest]
-        python-version: ["3.12.9"]
+        python-version: ["3.12.8"]
     
     steps:
     - name: Check out repository
       uses: actions/checkout@v4
         
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         
@@ -37,19 +37,11 @@ jobs:
     - name: Install test dependencies
       run: pip install pytest pytest-cov
 
-    # - name: Install matplotlib
-    #   run: pip install matplotlib  # Add this line
+    - name: Install matplotlib
+      run: pip install matplotlib
       
     - name: Run tests with coverage
-      run: |
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          export MPLBACKEND=Agg
-        else
-          export MPLBACKEND=Agg
-        if
-          pytest --cov=directstiffnessmethod --cov-report=xml
-      shell: bash
-      # Replace 'my_package' with your actual package name
+      run: pytest --cov=DSM --cov-report=xml
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
